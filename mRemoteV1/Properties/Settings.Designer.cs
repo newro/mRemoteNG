@@ -1174,7 +1174,67 @@ namespace mRemoteNG {
                 this["AlwaysShowPanelSelectionDlg"] = value;
             }
         }
-        
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Shift + Left")]
+        public string PanelLMove
+        {
+            get
+            {
+                return ((string)(this["PanelLMove"]));
+            }
+            set
+            {
+                this["PanelLMove"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Shift + Right")]
+        public string PanelRMove
+        {
+            get
+            {
+                return ((string)(this["PanelRMove"]));
+            }
+            set
+            {
+                this["PanelRMove"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Ctrl + Left")]
+        public string TabLMove
+        {
+            get
+            {
+                return ((string)(this["TabLMove"]));
+            }
+            set
+            {
+                this["TabLMove"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Ctrl + Right")]
+        public string TabRMove
+        {
+            get
+            {
+                return ((string)(this["TabRMove"]));
+            }
+            set
+            {
+                this["TabRMove"] = value;
+            }
+        }
+
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("AuthVNC")]

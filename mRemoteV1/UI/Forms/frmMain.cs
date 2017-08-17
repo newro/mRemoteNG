@@ -25,6 +25,7 @@ using mRemoteNG.UI.TaskDialog;
 using mRemoteNG.UI.Window;
 using Microsoft.Win32;
 using WeifenLuo.WinFormsUI.Docking;
+using sharphook;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -45,6 +46,7 @@ namespace mRemoteNG.UI.Forms
         private ConnectionInfo _selectedConnection;
         private readonly UnlockerFormFactory _credRepoUnlockerFormFactory = new UnlockerFormFactory();
         private readonly IList<IMessageWriter> _messageWriters = new List<IMessageWriter>();
+        private readonly SharpHook hook = new SharpHook();
 
         internal FullscreenHandler Fullscreen { get; set; }
 
@@ -55,6 +57,7 @@ namespace mRemoteNG.UI.Forms
             Fullscreen = new FullscreenHandler(this);
             pnlDock.Theme = new VS2012LightTheme();
             _screenSystemMenu = new ScreenSelectionSystemMenu(this);
+            hook.KeyUp += hook_KeyUp;
         }
 
         static FrmMain()
@@ -121,6 +124,13 @@ namespace mRemoteNG.UI.Forms
 				UpdateWindowTitle();
 			}
 		}
+
+        private System.Windows.Forms.KeyEventArgs _PanelLMove;
+        private System.Windows.Forms.KeyEventArgs _PanelRMove;
+        private System.Windows.Forms.KeyEventArgs _TabLMove;
+        private System.Windows.Forms.KeyEventArgs _TabRMove;
+    
+
         #endregion
 
         #region Startup & Shutdown
@@ -133,6 +143,8 @@ namespace mRemoteNG.UI.Forms
             Startup.Instance.InitializeProgram(messageCollector);
 
             SetMenuDependencies();
+
+            KeyboardHookOptionReload();
 
             var settingsLoader = new SettingsLoader(this, messageCollector, _quickConnectToolStrip, _externalToolsToolStrip);
             settingsLoader.LoadSettings();
@@ -435,6 +447,18 @@ namespace mRemoteNG.UI.Forms
 		    ((ConnectionWindow) ifc.FindForm())?.RefreshInterfaceController();
 		}
 
+        private bool IsActive()
+        {
+            var w = pnlDock.ActiveDocument as ConnectionWindow;
+            if (w?.TabController.SelectedTab == null) return false;
+
+            Crownwood.Magic.Controls.TabPage tab = w.TabController.SelectedTab;
+            Connection.InterfaceControl ifc = (Connection.InterfaceControl)tab.Tag;
+            if (ifc == null) return false;
+
+            return ifc.Protocol.Focused;
+        }
+
         private void pnlDock_ActiveDocumentChanged(object sender, EventArgs e)
 		{
 			ActivateConnection();
@@ -573,6 +597,101 @@ namespace mRemoteNG.UI.Forms
                 _clipboardChangedEvent = (ClipboardchangeEventHandler)Delegate.Remove(_clipboardChangedEvent, value);
             }
         }
+        #endregion
+
+        #region Keyboard Event
+
+        public void KeyboardHookOptionReload()
+        {
+            try
+            {
+                KeysConverter key_conv = new KeysConverter();
+
+                _PanelLMove = new KeyEventArgs((Keys)key_conv.ConvertFromString(Settings.Default.PanelLMove));
+                _PanelRMove = new KeyEventArgs((Keys)key_conv.ConvertFromString(Settings.Default.PanelRMove));
+                _TabLMove = new KeyEventArgs((Keys)key_conv.ConvertFromString(Settings.Default.TabLMove));
+                _TabRMove = new KeyEventArgs((Keys)key_conv.ConvertFromString(Settings.Default.TabRMove));
+            }
+            catch (Exception ex)
+            {
+                Runtime.MessageCollector.AddExceptionStackTrace("Invalid ShortCut", ex);
+            }
+        }
+
+        private bool MoveKey_Match(System.Windows.Forms.KeyEventArgs e, System.Windows.Forms.KeyEventArgs shortcut)
+        {
+            if (e.Control == shortcut.Control && e.Shift == shortcut.Shift && e.Alt == shortcut.Alt &&
+                e.KeyCode == shortcut.KeyCode)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private int PanelMove(ConnectionWindow currentCW, bool forward)
+        {
+            int targetIndex = 0;
+            int winCount = Runtime.WindowList.Count;
+            for (int i = 0; i < winCount; i++)
+            {
+                var connectionWindow = Runtime.WindowList[i] as ConnectionWindow;
+                if (object.ReferenceEquals(connectionWindow, currentCW) == true)
+                {
+                    int nextStep = (forward) ? winCount - 1 : 1;
+                    targetIndex = (i + nextStep) % winCount;
+                    break;
+                }
+            }
+            return targetIndex;
+        }
+
+        private void hook_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (!IsActive())
+            {
+                return;
+            }
+
+            try
+            {
+                mRemoteNG.UI.Window.ConnectionWindow activeWC = (mRemoteNG.UI.Window.ConnectionWindow)pnlDock.ActiveDocument;
+
+                if (MoveKey_Match(e, _TabLMove))
+                {
+                    activeWC.TabController.SelectedIndex = (activeWC.TabController.SelectedIndex + activeWC.TabController.TabPages.Count - 1) % activeWC.TabController.TabPages.Count;
+                }
+                else if (MoveKey_Match(e, _TabRMove))
+                {
+                    activeWC.TabController.SelectedIndex = (activeWC.TabController.SelectedIndex + 1) % activeWC.TabController.TabPages.Count;
+                }
+                else if (MoveKey_Match(e, _PanelLMove))
+                {
+                    int nextIndex = PanelMove(activeWC, true);
+                    activeWC = (ConnectionWindow)Runtime.WindowList[nextIndex];
+                }
+                else if (MoveKey_Match(e, _PanelRMove))
+                {
+                    int nextIndex = PanelMove(activeWC, false);
+                    activeWC = (ConnectionWindow)Runtime.WindowList[nextIndex];
+                }
+                else
+                {
+                    activeWC = null;
+                }
+
+                if (activeWC != null)
+                {
+                    activeWC.Show(pnlDock);
+                    ActivateConnection();
+                }
+            }
+            catch (Exception ex)
+            {
+                Runtime.MessageCollector.AddExceptionStackTrace("FocusIC failed", ex);
+            }
+
+        }
+        
         #endregion
 
         private void ViewMenu_Opening(object sender, EventArgs e)

@@ -47,6 +47,7 @@ namespace mRemoteNG.App
                         using (var optionsForm = new frmOptions())
                         {
                             optionsForm.ShowDialog(dockPanel);
+                            FrmMain.Default.KeyboardHookOptionReload();
                         }
                         break;
                     case WindowType.SSHTransfer:

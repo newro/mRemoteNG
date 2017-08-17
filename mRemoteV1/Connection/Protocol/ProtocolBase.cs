@@ -82,6 +82,11 @@ namespace mRemoteNG.Connection.Protocol
 			}
 		}
 
+        public virtual bool Focused
+        {
+            get { return this.ConnectionWindow != null && this.ConnectionWindow.Focused; }
+        }
+        
         public virtual void ResizeBegin(object sender, EventArgs e)
 		{		
 		}
