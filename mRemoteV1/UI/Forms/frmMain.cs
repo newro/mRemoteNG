@@ -456,7 +456,7 @@ namespace mRemoteNG.UI.Forms
             Connection.InterfaceControl ifc = (Connection.InterfaceControl)tab.Tag;
             if (ifc == null) return false;
 
-            return ifc.Protocol.Focused;
+            return ifc.Protocol.Focused || this.Focused;
         }
 
         private void pnlDock_ActiveDocumentChanged(object sender, EventArgs e)
