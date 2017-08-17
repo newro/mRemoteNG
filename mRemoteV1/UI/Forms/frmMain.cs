@@ -682,7 +682,6 @@ namespace mRemoteNG.UI.Forms
                 if (activeWC != null)
                 {
                     activeWC.Show(pnlDock);
-                    ActivateConnection();
                 }
             }
             catch (Exception ex)
